@@ -337,19 +337,43 @@ function Home({ days, hrs, mins, secs, saved, cigsAvoided, lifeMin, next, nextPc
     <div style={{ animation: "pop .35s ease" }}>
       <Header sub="Smoke-free for" title={`${days} ${days === 1 ? "day" : "days"}`} />
 
-      {/* Glanceable widget-style summary — the one number, big */}
-      <div style={{ background: `linear-gradient(135deg, ${C.teal}, #0a564a)`, color: "#fff",
-        borderRadius: 22, padding: "18px 20px", marginTop: 14, display: "flex",
-        justifyContent: "space-between", alignItems: "center",
-        boxShadow: "0 12px 28px rgba(14,107,92,.28)" }}>
-        <div>
-          <div style={{ fontSize: 12, opacity: .8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Smoke-free</div>
-          <div style={{ ...numStyle, fontSize: 44, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1 }}>{days}<span style={{ fontFamily: FONT.sans, fontSize: 18, opacity: .85, fontWeight: 700 }}> {days === 1 ? "day" : "days"}</span></div>
+      {/* Glanceable home-screen-style widget — live, at-a-glance summary */}
+      <div style={{ position: "relative", background: `linear-gradient(150deg, ${C.teal}, #0a564a 70%, #083f37)`,
+        color: "#fff", borderRadius: 24, padding: "16px 18px 14px", marginTop: 14, overflow: "hidden",
+        boxShadow: "0 14px 30px rgba(14,107,92,.30)" }}>
+        <div style={{ position: "absolute", top: -36, right: -28, width: 130, height: 130,
+          borderRadius: "50%", background: "rgba(240,121,91,.20)" }} />
+        {/* widget header: brand + live indicator */}
+        <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <LogoMark size={18} />
+            <span style={{ fontFamily: FONT.display, fontSize: 14, fontWeight: 800, letterSpacing: -0.2 }}>Freed</span>
+          </div>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700,
+            opacity: .85, textTransform: "uppercase", letterSpacing: 1 }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.coral,
+              boxShadow: "0 0 0 0 rgba(240,121,91,.7)", animation: "float 2.4s ease-in-out infinite" }} />
+            Live
+          </span>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 12, opacity: .8, fontWeight: 600 }}>Saved</div>
-          <div style={{ fontSize: 22, fontWeight: 800 }}>{money(saved)}</div>
-          <div style={{ fontSize: 12, opacity: .8, fontWeight: 600, marginTop: 6 }}>{fmt(cigsAvoided)} {prod.unitPlural} avoided</div>
+        {/* hero number */}
+        <div style={{ position: "relative", marginTop: 8, display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ ...numStyle, fontSize: 52, fontWeight: 900, letterSpacing: -2, lineHeight: 1 }}>{days}</span>
+          <span style={{ fontSize: 17, opacity: .9, fontWeight: 700 }}>{days === 1 ? "day" : "days"} smoke-free</span>
+        </div>
+        {/* live ticking timer */}
+        <div style={{ position: "relative", marginTop: 4, fontSize: 13, opacity: .85, fontWeight: 600,
+          fontFamily: FONT.sans, fontVariantNumeric: "tabular-nums" }}>
+          {String(hrs).padStart(2, "0")}:{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")} and counting
+        </div>
+        {/* mini stat row */}
+        <div style={{ position: "relative", display: "flex", gap: 10, marginTop: 14 }}>
+          {[[money(saved), "saved"], [fmt(cigsAvoided), prod.unitPlural + " avoided"], [fmt(lifeMin / 60), "hrs back"]].map(([v, l], i) => (
+            <div key={i} style={{ flex: 1, background: "rgba(255,255,255,.12)", borderRadius: 13, padding: "9px 11px" }}>
+              <div style={{ ...numStyle, fontSize: 18, fontWeight: 800, letterSpacing: -.5 }}>{v}</div>
+              <div style={{ fontSize: 10.5, opacity: .82, fontWeight: 600, marginTop: 1 }}>{l}</div>
+            </div>
+          ))}
         </div>
       </div>
 
