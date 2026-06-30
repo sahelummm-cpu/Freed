@@ -15,6 +15,16 @@ const C = {
   line: "#E7E3D7",
 };
 
+// Typography — Fraunces (warm display serif) for headlines & big numbers,
+// Inter for clean, legible UI text. Loaded via Google Fonts in index.html.
+const FONT = {
+  display: "'Fraunces', Georgia, 'Times New Roman', serif",
+  sans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+};
+// Shared style for large stat numbers — display face + tabular figures so
+// the live timer doesn't jitter as digits change.
+const numStyle = { fontFamily: FONT.display, fontFeatureSettings: "'tnum' 1", fontVariantNumeric: "tabular-nums" } as const;
+
 // Product types — adapts labels and pack units to the user's habit
 const PRODUCTS = {
   cigarettes: { label: "Cigarettes", unit: "cigarette", unitPlural: "cigarettes", packLabel: "per pack", packDefault: 20, icon: "🚬" },
@@ -155,12 +165,16 @@ function Shell({ children }) {
   return (
     <div style={{
       minHeight: "100vh", background: C.bg, color: C.ink,
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+      fontFamily: FONT.sans, WebkitFontSmoothing: "antialiased",
       maxWidth: 440, margin: "0 auto", position: "relative",
     }}>
       <style>{`
         @keyframes pop { from {transform:scale(.96);opacity:0} to {transform:scale(1);opacity:1} }
         @keyframes breatheGrow { 0%{transform:scale(.55)} 100%{transform:scale(1)} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes wave { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(16deg)} 75%{transform:rotate(-8deg)} }
+        @keyframes blink { 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.1)} }
+        @keyframes countUp { from {opacity:0;transform:translateY(6px)} to {opacity:1;transform:translateY(0)} }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         button { font-family: inherit; cursor: pointer; }
         ::-webkit-scrollbar { display:none; }
@@ -170,13 +184,82 @@ function Shell({ children }) {
   );
 }
 
+// ── Brand: logo mark + wordmark ─────────────────────────────────
+// Two breath/leaf strokes forming a pair of lungs around a central stem —
+// "lungs healing / set free."
+function LogoMark({ size = 34 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden>
+      <rect width="64" height="64" rx="16" fill={C.teal} />
+      <path d="M32 16c-9 6-16 12-16 22a16 16 0 0 0 16 8" stroke={C.tealSoft} strokeWidth="5" strokeLinecap="round" />
+      <path d="M32 16c9 6 16 12 16 22a16 16 0 0 1-16 8" stroke={C.coral} strokeWidth="5" strokeLinecap="round" />
+      <line x1="32" y1="14" x2="32" y2="48" stroke={C.tealSoft} strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Logo({ size = 34, light = false }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <LogoMark size={size} />
+      <span style={{ fontFamily: FONT.display, fontWeight: 800, fontSize: size * 0.72,
+        letterSpacing: -0.5, color: light ? "#fff" : C.ink }}>Freed</span>
+    </div>
+  );
+}
+
+// ── Mascot: "Breeze", a friendly lung-cloud buddy ───────────────
+// Warm, non-judgmental companion. mood adjusts expression + motion.
+function Mascot({ size = 96, mood = "calm" }) {
+  const anim = mood === "calm" ? "float 4s ease-in-out infinite"
+    : mood === "cheer" ? "float 1.6s ease-in-out infinite" : "none";
+  const cheeks = mood === "cheer" || mood === "wave";
+  // mouth path: smile for happy moods, soft gentle line for support
+  const mouth = mood === "support"
+    ? "M26 40 q6 4 12 0"
+    : mood === "cheer"
+    ? "M24 38 q8 11 16 0"
+    : "M26 39 q6 6 12 0";
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" style={{ animation: anim, overflow: "visible" }} aria-hidden>
+      {/* little sprout on top */}
+      <path d="M32 12c0-4 3-6 6-6-.5 4-3 6-6 6Z" fill={C.sage} />
+      <path d="M32 13c0-4-3-7-7-7 .5 4 4 7 7 7Z" fill={C.teal} />
+      <line x1="32" y1="12" x2="32" y2="18" stroke={C.teal} strokeWidth="2.4" strokeLinecap="round" />
+      {/* soft cloud/lung body */}
+      <path d="M20 50c-7 0-11-5-11-11 0-6 4-10 9-11 1-7 7-12 14-12s13 5 14 12c5 1 9 5 9 11 0 6-4 11-11 11Z"
+        fill={C.tealSoft} stroke={C.teal} strokeWidth="2.5" strokeLinejoin="round" />
+      {/* eyes */}
+      <g style={{ animation: "blink 5s ease-in-out infinite", transformOrigin: "center" }}>
+        <circle cx="26" cy="33" r="2.6" fill={C.ink} />
+        <circle cx="40" cy="33" r="2.6" fill={C.ink} />
+      </g>
+      {cheeks && <>
+        <circle cx="21" cy="38" r="3" fill={C.coral} opacity="0.5" />
+        <circle cx="45" cy="38" r="3" fill={C.coral} opacity="0.5" />
+      </>}
+      {/* mouth */}
+      <path d={mouth} stroke={C.ink} strokeWidth="2.2" strokeLinecap="round" fill="none" />
+      {/* waving hand */}
+      {mood === "wave" && (
+        <g style={{ animation: "wave .8s ease-in-out infinite", transformOrigin: "50px 44px" }}>
+          <circle cx="52" cy="42" r="4" fill={C.coral} />
+        </g>
+      )}
+    </svg>
+  );
+}
+
 // ── Onboarding ──────────────────────────────────────────────────
 function Onboard({ draft, setDraft, onDone }) {
   const set = (k, v) => setDraft((d) => ({ ...d, [k]: v }));
   return (
-    <div style={{ padding: "64px 24px 40px", animation: "pop .4s ease" }}>
-      <div style={{ fontSize: 13, letterSpacing: 2, color: C.teal, fontWeight: 700, textTransform: "uppercase" }}>Freed</div>
-      <h1 style={{ fontSize: 34, lineHeight: 1.15, margin: "8px 0 6px", fontWeight: 800, letterSpacing: -1 }}>
+    <div style={{ padding: "56px 24px 40px", animation: "pop .4s ease" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Logo size={30} />
+        <Mascot size={64} mood="wave" />
+      </div>
+      <h1 style={{ fontFamily: FONT.display, fontSize: 36, lineHeight: 1.1, margin: "14px 0 6px", fontWeight: 800, letterSpacing: -0.5 }}>
         Your last cigarette<br />was the last one.
       </h1>
       <p style={{ color: C.muted, fontSize: 15, margin: "0 0 28px", lineHeight: 1.5 }}>
@@ -261,7 +344,7 @@ function Home({ days, hrs, mins, secs, saved, cigsAvoided, lifeMin, next, nextPc
         boxShadow: "0 12px 28px rgba(14,107,92,.28)" }}>
         <div>
           <div style={{ fontSize: 12, opacity: .8, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>Smoke-free</div>
-          <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1 }}>{days}<span style={{ fontSize: 18, opacity: .85, fontWeight: 700 }}> {days === 1 ? "day" : "days"}</span></div>
+          <div style={{ ...numStyle, fontSize: 44, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1 }}>{days}<span style={{ fontFamily: FONT.sans, fontSize: 18, opacity: .85, fontWeight: 700 }}> {days === 1 ? "day" : "days"}</span></div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 12, opacity: .8, fontWeight: 600 }}>Saved</div>
@@ -317,7 +400,7 @@ function Header({ sub, title }) {
   return (
     <div style={{ paddingTop: 56, marginBottom: 4 }}>
       <div style={{ fontSize: 13, color: C.muted, fontWeight: 600 }}>{sub}</div>
-      <h1 style={{ fontSize: 32, fontWeight: 800, margin: "2px 0 0", letterSpacing: -1 }}>{title}</h1>
+      <h1 style={{ fontFamily: FONT.display, fontSize: 34, fontWeight: 800, margin: "2px 0 0", letterSpacing: -0.5, lineHeight: 1.05 }}>{title}</h1>
     </div>
   );
 }
@@ -330,14 +413,14 @@ function Ring({ days, hrs, mins, secs, pct }) {
         <svg width="230" height="230" style={{ transform: "rotate(-90deg)" }}>
           <circle cx="115" cy="115" r={R} fill="none" stroke={C.tealSoft} strokeWidth={stroke} />
           <circle cx="115" cy="115" r={R} fill="none" stroke={C.teal} strokeWidth={stroke}
-            strokelinecap="round" strokeLinecap="round"
+            strokeLinecap="round"
             strokeDasharray={circ} strokeDashoffset={circ - (circ * pct) / 100}
             style={{ transition: "stroke-dashoffset .6s ease" }} />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center" }}>
           <div style={{ fontSize: 13, color: C.muted, fontWeight: 600 }}>elapsed</div>
-          <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: -1 }}>
+          <div style={{ ...numStyle, fontSize: 32, fontWeight: 800, letterSpacing: -1 }}>
             {String(hrs).padStart(2, "0")}:{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
           </div>
           <div style={{ fontSize: 12, color: C.coral, fontWeight: 700, marginTop: 4 }}>
@@ -354,7 +437,7 @@ function Stat({ label, value, accent, small }) {
     <div style={{ background: C.card, borderRadius: 18, padding: "16px 16px",
       border: `1px solid ${C.line}` }}>
       <div style={{ width: 26, height: 4, borderRadius: 4, background: accent, marginBottom: 10 }} />
-      <div style={{ fontSize: small ? 15 : 22, fontWeight: 800, letterSpacing: -.5, lineHeight: 1.15 }}>{value}</div>
+      <div style={{ ...(small ? {} : numStyle), fontSize: small ? 15 : 23, fontWeight: 800, letterSpacing: -.5, lineHeight: 1.15 }}>{value}</div>
       <div style={{ fontSize: 12, color: C.muted, fontWeight: 600, marginTop: 3 }}>{label}</div>
     </div>
   );
@@ -412,7 +495,7 @@ function Money({ saved, cigsAvoided, setup, days, goals, setGoals }) {
       <div style={{ background: C.teal, color: "#fff", borderRadius: 22, padding: 20, marginTop: 16,
         boxShadow: "0 12px 28px rgba(14,107,92,.25)" }}>
         <div style={{ fontSize: 13, opacity: .85, fontWeight: 600 }}>You'd be spending</div>
-        <div style={{ fontSize: 28, fontWeight: 800 }}>{money(perDay)}<span style={{ fontSize: 15, opacity: .8 }}> / day</span></div>
+        <div style={{ ...numStyle, fontSize: 30, fontWeight: 800 }}>{money(perDay)}<span style={{ fontFamily: FONT.sans, fontSize: 15, opacity: .8 }}> / day</span></div>
       </div>
 
       <SectionTitle>If you keep going</SectionTitle>
@@ -533,7 +616,10 @@ function Breathe() {
             transition: `transform ${dur} ease-in-out`,
           }} />
           <div style={{ position: "relative", textAlign: "center" }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: C.teal }}>{phase}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+              <Mascot size={56} mood="calm" />
+            </div>
+            <div style={{ fontFamily: FONT.display, fontSize: 23, fontWeight: 800, color: C.teal }}>{phase}</div>
             {running && <div style={{ fontSize: 13, color: C.muted, fontWeight: 600, marginTop: 4 }}>cycle {cycle}</div>}
           </div>
         </div>
@@ -609,25 +695,26 @@ function ShareCard({ days, saved, cigsAvoided, lifeMin, prod, onClose }) {
         animation: "pop .3s ease", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -40, right: -40, width: 160, height: 160,
           borderRadius: "50%", background: "rgba(240,121,91,.25)" }} />
-        <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 13, letterSpacing: 3, fontWeight: 800, opacity: .85, textTransform: "uppercase" }}>Freed</div>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 8 }}>
+          <LogoMark size={26} />
+          <span style={{ fontFamily: FONT.display, fontSize: 19, fontWeight: 800, letterSpacing: -0.3 }}>Freed</span>
         </div>
         <div style={{ position: "relative" }}>
           <div style={{ fontSize: 15, opacity: .85, fontWeight: 600 }}>I've been smoke-free for</div>
-          <div style={{ fontSize: 80, fontWeight: 800, letterSpacing: -3, lineHeight: .95 }}>{days}</div>
+          <div style={{ ...numStyle, fontSize: 84, fontWeight: 900, letterSpacing: -3, lineHeight: .95 }}>{days}</div>
           <div style={{ fontSize: 22, fontWeight: 700, opacity: .9 }}>{days === 1 ? "day" : "days"}</div>
         </div>
         <div style={{ position: "relative", display: "flex", gap: 22 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{money(saved)}</div>
+            <div style={{ ...numStyle, fontSize: 23, fontWeight: 800 }}>{money(saved)}</div>
             <div style={{ fontSize: 12, opacity: .8, fontWeight: 600 }}>saved</div>
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{fmt(lifeMin / 60)}</div>
+            <div style={{ ...numStyle, fontSize: 23, fontWeight: 800 }}>{fmt(lifeMin / 60)}</div>
             <div style={{ fontSize: 12, opacity: .8, fontWeight: 600 }}>hrs reclaimed</div>
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{fmt(cigsAvoided)}</div>
+            <div style={{ ...numStyle, fontSize: 23, fontWeight: 800 }}>{fmt(cigsAvoided)}</div>
             <div style={{ fontSize: 12, opacity: .8, fontWeight: 600 }}>avoided</div>
           </div>
         </div>
@@ -659,11 +746,14 @@ function RelapseSheet({ onCancel, onConfirm }) {
         background: C.card, borderRadius: "26px 26px 0 0", padding: "24px 22px 30px",
         animation: "pop .25s ease" }}>
         <div style={{ width: 40, height: 4, background: C.line, borderRadius: 4,
-          margin: "0 auto 18px" }} />
-        <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 6px", letterSpacing: -.5 }}>
+          margin: "0 auto 14px" }} />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>
+          <Mascot size={72} mood="support" />
+        </div>
+        <h2 style={{ fontFamily: FONT.display, fontSize: 24, fontWeight: 800, margin: "0 0 6px", letterSpacing: -.5, textAlign: "center" }}>
           A slip isn't a failure
         </h2>
-        <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.5, margin: "0 0 16px" }}>
+        <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.5, margin: "0 0 16px", textAlign: "center" }}>
           We'll save this streak to your history so you can see how far you came, then start a fresh count. What triggered it? (optional)
         </p>
         <input value={note} onChange={(e) => setNote(e.target.value)}
@@ -774,28 +864,41 @@ function You({ history, best, elapsedMs, setup, prod, reminders, setReminders, o
   );
 }
 
+const NAV_ICONS = {
+  home: "M3 11.5 12 4l9 7.5M5 10v9h5v-5h4v5h5v-9",
+  money: "M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1-4 2.7c0 3.8 8 1.8 8 5.6 0 1.8-1.8 3-4 3s-4-1.2-4-3",
+  health: "M12 20s-7-4.6-9.3-9C1 7.7 2.6 4.5 6 4.5c2 0 3.2 1.2 4 2.4.8-1.2 2-2.4 4-2.4 3.4 0 5 3.2 3.3 6.5C19 15.4 12 20 12 20Z",
+  breathe: "M3 12h4l2-5 3 10 2-7 2 4h5",
+  you: "M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+};
+
 function Nav({ tab, setTab }) {
   const items = [
-    ["home", "Home", "◎"],
-    ["money", "Money", "$"],
-    ["health", "Health", "♡"],
-    ["breathe", "Breathe", "~"],
-    ["you", "You", "☻"],
+    ["home", "Home"], ["money", "Money"], ["health", "Health"],
+    ["breathe", "Breathe"], ["you", "You"],
   ];
   return (
-    <div style={{ position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
+    <div style={{ position: "fixed", bottom: "max(16px, env(safe-area-inset-bottom))",
+      left: "50%", transform: "translateX(-50%)",
       width: "calc(100% - 40px)", maxWidth: 400, background: C.ink, borderRadius: 22,
       display: "flex", padding: 6, boxShadow: "0 12px 30px rgba(0,0,0,.22)" }}>
-      {items.map(([k, label, icon]) => (
-        <button key={k} onClick={() => setTab(k)} style={{
-          flex: 1, border: "none", background: tab === k ? C.teal : "transparent",
-          color: tab === k ? "#fff" : "#9FB0AD", borderRadius: 16, padding: "10px 0",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-          transition: "background .2s" }}>
-          <span style={{ fontSize: 17, fontWeight: 800 }}>{icon}</span>
-          <span style={{ fontSize: 11, fontWeight: 600 }}>{label}</span>
-        </button>
-      ))}
+      {items.map(([k, label]) => {
+        const active = tab === k;
+        return (
+          <button key={k} onClick={() => setTab(k)} style={{
+            flex: 1, border: "none", background: active ? C.teal : "transparent",
+            color: active ? "#fff" : "#9FB0AD", borderRadius: 16, padding: "9px 0",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+            transition: "background .25s, color .25s" }}>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth={active ? 2.4 : 2}
+              strokeLinecap="round" strokeLinejoin="round">
+              <path d={NAV_ICONS[k]} />
+            </svg>
+            <span style={{ fontSize: 11, fontWeight: active ? 700 : 600 }}>{label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
